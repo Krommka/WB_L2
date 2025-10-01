@@ -7,10 +7,20 @@ import (
 )
 
 func main() {
-	sl := []string{"пятак", "пятка", "тяпка", "листок", "слиток", "столик", "стол"}
-	//sl := []string{"fdg", "asdsf", "ds", "dfg", "wsad", "sdfgg", "sadf"}
-	mp := FindAnagrams(sl)
-	fmt.Println(mp)
+	s1 := []string{"пятак", "пятка", "тяпка", "листок", "столик", "слиток", "стол"}
+	s2 := []string{"пятак", "пятка", "тяпка", "столик", "листок", "слиток", "стол"}
+	s3 := []string{"пятак", "пятка", "Тяпка", "столик", "листок", "слиток", "стол"}
+	s4 := []string{}
+	s5 := []string{"1234", "2341", "3334", "4444", "54444", "6565", "5656"}
+	sl := [][]string{s1, s2, s3, s4, s5}
+	for i, s := range sl {
+		fmt.Printf("s%d\n", i)
+		mp := FindAnagrams(s)
+		for k, _ := range mp {
+			fmt.Printf("- \"%s\": [\"%s\"]\n", k, strings.Join(mp[k], "\", \""))
+		}
+		fmt.Printf("\n")
+	}
 }
 
 // FindAnagrams находит все множества анаграмм по заданному словарю
@@ -30,7 +40,7 @@ func FindAnagrams(words []string) map[string][]string {
 		})
 		key := string(runes)
 
-		groups[key] = append(groups[key], word)
+		groups[key] = append(groups[key], lower)
 	}
 
 	result := make(map[string][]string)
