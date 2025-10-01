@@ -30,19 +30,7 @@ func ParseFlags() (*Config, []string, error) {
 	var keyColumn int
 
 	fs := flag.NewFlagSet("sort", flag.ContinueOnError)
-	fs.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s [OPTIONS] [FILE...]\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "Sort lines of text files\n\n")
-		fmt.Fprintf(os.Stderr, "Options:\n")
-		fmt.Fprintf(os.Stderr, "  -k N    sort by column N (1-based)\n")
-		fmt.Fprintf(os.Stderr, "  -n      sort numerically\n")
-		fmt.Fprintf(os.Stderr, "  -r      reverse sort order\n")
-		fmt.Fprintf(os.Stderr, "  -u      output only unique lines\n")
-		fmt.Fprintf(os.Stderr, "  -M      sort by month names\n")
-		fmt.Fprintf(os.Stderr, "  -b      ignore trailing blanks\n")
-		fmt.Fprintf(os.Stderr, "  -c      check if input is sorted\n")
-		fmt.Fprintf(os.Stderr, "  -h      sort by human-readable numbers\n")
-	}
+	fs.Usage = Usage
 
 	fs.IntVar(&keyColumn, "k", 0, "sort by key column number")
 	fs.BoolVar(&config.Numeric, "n", false, "sort numerically")
