@@ -2,7 +2,6 @@
 
 echo "=== Тестирование mysh ==="
 
-# Функция для тестирования вывода команд
 test_command() {
     local test_name="$1"
     local command="$2"
@@ -12,7 +11,6 @@ test_command() {
     echo "=== $test_name ==="
     echo "Команда: $command"
 
-    # Запускаем mysh с командой и захватываем вывод
     local actual_output
     actual_output=$({ sleep 0.1; echo "$command"; sleep 0.1; } | ./mysh)
 
@@ -28,7 +26,6 @@ test_command() {
     fi
 }
 
-# Функция для тестирования редиректов в файлы
 test_redirect() {
     local test_name="$1"
     local command="$2"
@@ -39,10 +36,6 @@ test_redirect() {
     echo "=== $test_name ==="
     echo "Команда: $command"
 
-    # Очищаем файл
-#    rm -f "$test_file"
-
-    # Запускаем mysh с командой редиректа
     { sleep 0.1; echo "$command"; sleep 0.1; } | ./mysh
 
     echo "--- Ожидаемое содержимое: ---"
