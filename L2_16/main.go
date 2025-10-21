@@ -1,14 +1,18 @@
 package main
 
 import (
-	parsingflags "L2_16/parsingFlags"
+	"L2_16/config"
+	"L2_16/downloadFile"
 	"fmt"
 )
 
 func main() {
-	config, err := parsingflags.ParseFlags()
-	if err != nil {
-		panic(err)
+	cfg := config.MustLoad()
+
+	downloader := downloadFile.NewDownloader()
+
+	if err := downloader.Load(cfg); err != nil {
+		fmt.Println(err)
 	}
-	fmt.Println(config)
+
 }
