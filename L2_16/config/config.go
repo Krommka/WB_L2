@@ -8,12 +8,14 @@ import (
 	"strings"
 )
 
+// Config парсит флаги
 type Config struct {
 	Level   int
-	rawLink string
+	rawLink string ``
 	Site    *url.URL
 }
 
+// MustLoad загружает конфиг
 func MustLoad() *Config {
 	config, err := ParseFlags()
 	if err != nil {
@@ -29,6 +31,7 @@ func MustLoad() *Config {
 	return config
 }
 
+// ParseFlags парсит входные флаги
 func ParseFlags() (*Config, error) {
 	config := &Config{}
 	if len(os.Args) < 1 {
@@ -59,6 +62,7 @@ func ParseFlags() (*Config, error) {
 	return config, nil
 }
 
+// createLink создает начальную ссылку
 func createLink(rawLink string) (*url.URL, error) {
 	if !strings.Contains(rawLink, "://") {
 		rawLink = "https://" + rawLink

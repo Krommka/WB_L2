@@ -6,14 +6,17 @@ import (
 	"strings"
 )
 
+// Converter преобразует пути
 type Converter struct {
 	baseURL *url.URL
 }
 
+// NewPathConverter создает конвертер
 func NewPathConverter(baseURL *url.URL) *Converter {
 	return &Converter{baseURL: baseURL}
 }
 
+// URLToLocalPath Преобразует url в локальный путь
 func (pc *Converter) URLToLocalPath(u *url.URL) string {
 	normalized := pc.normalizeURL(u)
 	relativePath := pc.getRelativePath(normalized)
@@ -21,7 +24,8 @@ func (pc *Converter) URLToLocalPath(u *url.URL) string {
 
 }
 
-func (pc *Converter) ResourceToLocalPath(u *url.URL) string {
+// AssetToLocalPath Преобразует url ассета в локальный путь
+func (pc *Converter) AssetToLocalPath(u *url.URL) string {
 	return u.Host + u.Path
 }
 
