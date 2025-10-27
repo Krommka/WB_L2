@@ -14,14 +14,14 @@ import (
 type HTMLHandler struct {
 	link   *url.URL
 	base   *url.URL
-	Links  map[*url.URL]bool
-	Assets map[*url.URL]bool
+	Links  map[string]bool
+	Assets map[string]bool
 }
 
 // New создает парсер HTML
 func New(resource *url.URL) *HTMLHandler {
-	links := make(map[*url.URL]bool)
-	assets := make(map[*url.URL]bool)
+	links := make(map[string]bool)
+	assets := make(map[string]bool)
 	return &HTMLHandler{
 		link:   resource,
 		base:   nil,
@@ -66,7 +66,7 @@ func (handler *HTMLHandler) setupBaseHref(n *html.Node) {
 		switch n.Data {
 		case "base":
 			if href := getAttribute(n, "href"); href != "" {
-				if absoluteURL := toAbsoluteURL(href, handler.base); absoluteURL != nil {
+				if absoluteURL := toAbsoluteURL(href, handler.link); absoluteURL != nil {
 					handler.base = absoluteURL
 					slog.Debug("Found base", "base", absoluteURL.String())
 				}
@@ -91,8 +91,8 @@ func (handler *HTMLHandler) extractLinksAndResources(n *html.Node) {
 			if href := getAttribute(n, "href"); href != "" {
 				if absoluteURL := toAbsoluteURL(href, handler.base); absoluteURL != nil {
 					if isSameDomain(absoluteURL, handler.link) {
-						if _, ok := handler.Links[absoluteURL]; !ok {
-							handler.Links[absoluteURL] = true
+						if _, ok := handler.Links[absoluteURL.String()]; !ok {
+							handler.Links[absoluteURL.String()] = true
 							slog.Info("Found resource", "type", n.Data, "link", absoluteURL.String())
 						}
 					}
@@ -102,8 +102,8 @@ func (handler *HTMLHandler) extractLinksAndResources(n *html.Node) {
 		case "img":
 			if src := getAttribute(n, "src"); src != "" {
 				if absoluteURL := toAbsoluteURL(src, handler.base); absoluteURL != nil {
-					if _, ok := handler.Assets[absoluteURL]; !ok {
-						handler.Assets[absoluteURL] = true
+					if _, ok := handler.Assets[absoluteURL.String()]; !ok {
+						handler.Assets[absoluteURL.String()] = true
 						slog.Info("Found resource", "type", n.Data, "link", absoluteURL.String())
 					}
 				}
@@ -113,33 +113,35 @@ func (handler *HTMLHandler) extractLinksAndResources(n *html.Node) {
 			if rel := getAttribute(n, "rel"); rel == "stylesheet" || rel == "icon" || rel == "shortcut icon" {
 				if href := getAttribute(n, "href"); href != "" {
 					if absoluteURL := toAbsoluteURL(href, handler.base); absoluteURL != nil {
-						if _, ok := handler.Assets[absoluteURL]; !ok {
-							handler.Assets[absoluteURL] = true
+						if _, ok := handler.Assets[absoluteURL.String()]; !ok {
+							handler.Assets[absoluteURL.String()] = true
 							slog.Info("Found resource", "type", n.Data, "link", absoluteURL.String())
 						}
 					}
 				}
 			}
-
-		case "script":
-			if src := getAttribute(n, "src"); src != "" {
-				if absoluteURL := toAbsoluteURL(src, handler.base); absoluteURL != nil {
-					if _, ok := handler.Assets[absoluteURL]; !ok {
-						handler.Assets[absoluteURL] = true
-						slog.Info("Found resource", "type", n.Data, "link", absoluteURL.String())
-					}
-				}
-			}
-
-		case "iframe", "embed", "source", "track", "audio", "video":
-			if src := getAttribute(n, "src"); src != "" {
-				if absoluteURL := toAbsoluteURL(src, handler.base); absoluteURL != nil {
-					if _, ok := handler.Assets[absoluteURL]; !ok {
-						handler.Assets[absoluteURL] = true
-						slog.Info("Found resource", "type", n.Data, "link", absoluteURL.String())
-					}
-				}
-			}
+			//case "script":
+			//	if src := getAttribute(n, "src"); src != "" {
+			//		if isDynamicScript(src) {
+			//			break
+			//		}
+			//		if absoluteURL := toAbsoluteURL(src, handler.base); absoluteURL != nil {
+			//			if _, ok := handler.Assets[absoluteURL.String()]; !ok {
+			//				handler.Assets[absoluteURL.String()] = true
+			//				slog.Info("Found resource", "type", n.Data, "link", absoluteURL.String())
+			//			}
+			//		}
+			//	}
+			//
+			//case "iframe", "embed", "source", "track", "audio", "video":
+			//	if src := getAttribute(n, "src"); src != "" {
+			//		if absoluteURL := toAbsoluteURL(src, handler.base); absoluteURL != nil {
+			//			if _, ok := handler.Assets[absoluteURL.String()]; !ok {
+			//				handler.Assets[absoluteURL.String()] = true
+			//				slog.Info("Found resource", "type", n.Data, "link", absoluteURL.String())
+			//			}
+			//		}
+			//	}
 		}
 	}
 
@@ -154,7 +156,7 @@ func (handler *HTMLHandler) transformHTMLLinks(doc *html.Node) ([]byte, error) {
 	transformAttributes = func(n *html.Node) {
 		if n.Type == html.ElementNode {
 			switch n.Data {
-			case "img", "link", "script", "iframe", "embed", "source", "track", "audio", "video":
+			case "img", "link":
 				if src := getAttribute(n, "src"); src != "" {
 					if absoluteURL := toAbsoluteURL(src, handler.base); absoluteURL != nil {
 						relativePath := toRelativePath(absoluteURL, handler.link)
@@ -260,6 +262,7 @@ func toAbsoluteURL(link string, baseURL *url.URL) *url.URL {
 	}
 
 	if parsed.IsAbs() {
+		parsed.Scheme = baseURL.Scheme
 		return parsed
 	}
 

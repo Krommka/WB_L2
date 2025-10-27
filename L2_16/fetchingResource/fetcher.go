@@ -10,11 +10,13 @@ import (
 	"time"
 )
 
+// Fetcher Структура фетчера
 type Fetcher struct {
 	semaphore chan struct{}
 	client    *http.Client
 }
 
+// NewFetcher конструктор фетчера
 func NewFetcher(concurrency int) *Fetcher {
 	transport := &http.Transport{
 		DialContext: (&net.Dialer{
@@ -36,6 +38,7 @@ func NewFetcher(concurrency int) *Fetcher {
 	}
 }
 
+// Fetch Получает данные по сети
 func (f *Fetcher) Fetch(ctx context.Context, url string) (*http.Response, error) {
 	f.semaphore <- struct{}{}
 	defer func() { <-f.semaphore }()
