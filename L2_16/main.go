@@ -2,16 +2,26 @@ package main
 
 import (
 	"L2_16/config"
-	"L2_16/downloadFile"
+	"L2_16/processing"
+
 	"fmt"
+	"log/slog"
+	"os"
 )
+
+func init() {
+	handler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	})
+	slog.SetDefault(slog.New(handler))
+}
 
 func main() {
 	cfg := config.MustLoad()
 
-	downloader := downloadFile.NewDownloader()
+	processor := processing.New(cfg)
 
-	if err := downloader.Load(cfg); err != nil {
+	if err := processor.Do(); err != nil {
 		fmt.Println(err)
 	}
 

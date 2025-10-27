@@ -3,19 +3,15 @@ package config
 import (
 	"flag"
 	"fmt"
+	"net/url"
 	"os"
+	"strings"
 )
 
 type Config struct {
-	Level     int
-	Site      string
-	Resources []string
-	Links     []Page
-}
-
-type Page struct {
-	address string
-	level   int
+	Level   int
+	rawLink string
+	Site    *url.URL
 }
 
 func MustLoad() *Config {
@@ -23,21 +19,25 @@ func MustLoad() *Config {
 	if err != nil {
 		panic(err)
 	}
-	config.Resources = make([]string, 0)
-	config.Links = make([]Page, 0)
+
+	link, err := createLink(config.rawLink)
+	if err != nil {
+		panic(err)
+	}
+	config.Site = link
 
 	return config
 }
 
 func ParseFlags() (*Config, error) {
-	config := Config{}
+	config := &Config{}
 	if len(os.Args) < 1 {
 		return nil, fmt.Errorf("не указаны аргументы")
 	}
 
 	fs := flag.NewFlagSet("wget", flag.ContinueOnError)
 
-	fs.IntVar(&config.Level, "l", 0, "level")
+	fs.IntVar(&config.Level, "l", 1, "level")
 
 	if err := fs.Parse(os.Args[1:]); err != nil {
 		return nil, err
@@ -50,11 +50,25 @@ func ParseFlags() (*Config, error) {
 	if len(args) < 1 {
 		return nil, fmt.Errorf("сайт не указан")
 	}
-	config.Site = args[0]
+	config.rawLink = args[0]
 
-	if config.Site == "" {
+	if config.rawLink == "" {
 		return nil, fmt.Errorf("сайт не может быть пустым")
 	}
 
-	return &config, nil
+	return config, nil
+}
+
+func createLink(rawLink string) (*url.URL, error) {
+	if !strings.Contains(rawLink, "://") {
+		rawLink = "https://" + rawLink
+	}
+	siteLink, err := url.Parse(rawLink)
+	if err != nil {
+		return nil, err
+	}
+	if siteLink.Path == "" {
+		siteLink.Path = "/"
+	}
+	return siteLink, nil
 }
