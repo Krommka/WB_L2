@@ -22,7 +22,7 @@ profile.cov
 .env
 
 # Editor/IDE
- .idea/
+.idea/
 
  # Binary
- mywget
+mywget
