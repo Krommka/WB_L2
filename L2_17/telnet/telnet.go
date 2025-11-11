@@ -3,13 +3,11 @@ package telnet
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"mytelnet/config"
 	"net"
 	"os"
-	"os/signal"
 	"sync"
-	"syscall"
+	"time"
 )
 
 // Client представляет telnet-клиент
@@ -46,7 +44,6 @@ func (tc *Client) Connect() error {
 
 // Start запускает обработку ввода/вывода
 func (tc *Client) Start() {
-	//tc.setupSignalHandler()
 
 	tc.wg.Add(1)
 	go tc.readFromSocket()
@@ -58,45 +55,26 @@ func (tc *Client) Start() {
 	tc.Cleanup()
 }
 
-// setupSignalHandler настраивает обработчик сигналов
-func (tc *Client) setupSignalHandler() {
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-
-	go func() {
-		<-sigCh
-		fmt.Println("\nReceived interrupt signal, closing connection...")
-		close(tc.done)
-	}()
-}
-
 // readFromSocket читает данные из сокета и выводит в STDOUT
 func (tc *Client) readFromSocket() {
 	defer tc.wg.Done()
 
-	lines := make(chan string)
-	errors := make(chan error)
 	scanner := bufio.NewScanner(tc.conn)
-
-	go func() {
-
-		for scanner.Scan() {
-			lines <- scanner.Text() + "\n"
-		}
-		if err := scanner.Err(); err != nil {
-			errors <- err
-		} else {
-			errors <- io.EOF
-		}
-	}()
 
 	for {
 		select {
 		case <-tc.done:
+			fmt.Println("Reader: received done signal, shutting down...")
 			return
 		default:
+			tc.conn.SetReadDeadline(time.Now().Add(1 * time.Second))
 			if !scanner.Scan() {
-				fmt.Println("\nConnection closed by server")
+				if err := scanner.Err(); err != nil {
+					if ne, ok := err.(net.Error); ok && ne.Timeout() {
+						continue
+					}
+				}
+				fmt.Println("Reader: connection closed by server")
 				close(tc.done)
 				return
 			}
@@ -105,27 +83,6 @@ func (tc *Client) readFromSocket() {
 		}
 	}
 }
-
-//// readFromSocket читает данные из сокета и выводит в STDOUT
-//func (tc *Client) readFromSocket() {
-//	defer tc.wg.Done()
-//
-//	scanner := bufio.NewScanner(tc.conn)
-//	for {
-//		select {
-//		case <-tc.done:
-//			return
-//		default:
-//			if !scanner.Scan() {
-//				fmt.Println("\nConnection closed by server")
-//				close(tc.done)
-//				return
-//			}
-//			text := scanner.Text()
-//			fmt.Println(text)
-//		}
-//	}
-//}
 
 // writeToSocket читает данные из STDIN и отправляет в сокет
 func (tc *Client) writeToSocket() {
@@ -138,7 +95,7 @@ func (tc *Client) writeToSocket() {
 			return
 		default:
 			if !scanner.Scan() {
-				fmt.Println("\nClosing connection...")
+				fmt.Println("Writer: closing connection...")
 				close(tc.done)
 				return
 			}
