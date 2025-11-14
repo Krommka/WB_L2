@@ -1,5 +1,6 @@
 package domain
 
 type User struct {
-	ID string
+	ID     string
+	Events map[string]struct{}
 }

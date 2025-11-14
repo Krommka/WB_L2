@@ -1,8 +1,15 @@
 package domain
 
+import "time"
+
 type Event struct {
-	creatorID string
-	text      string
-	status    string
-	date      string
+	CreatorID string
+	EventID   string
+	Text      string
+	Date      time.Time
+}
+
+type DTOEvent struct {
+	Text string
+	Date string
 }
